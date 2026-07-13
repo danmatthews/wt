@@ -15,9 +15,12 @@ type Project struct {
 
 // Worktree is one registered git worktree belonging to a Project.
 type Worktree struct {
-	Path         string        `toml:"path" json:"path"`
-	Name         string        `toml:"name" json:"name"`
-	Description  string        `toml:"description,omitempty" json:"description,omitempty"`
+	Path        string `toml:"path" json:"path"`
+	Name        string `toml:"name" json:"name"`
+	Description string `toml:"description,omitempty" json:"description,omitempty"`
+	// App names the application used to work on this worktree, e.g.
+	// "Conductor.app" or "Warp Terminal". Optional and free-form.
+	App          string        `toml:"app,omitempty" json:"app,omitempty"`
 	Special      bool          `toml:"special,omitempty" json:"special"`
 	RegisteredAt string        `toml:"registered_at" json:"registered_at"`
 	UpdatedAt    string        `toml:"updated_at" json:"updated_at"`

@@ -13,10 +13,10 @@ import (
 
 func newSet() *cobra.Command {
 	return &cobra.Command{
-		Use:       "set <name|description> <value>",
-		Short:     "Update this worktree's name or description",
+		Use:       "set <name|description|app> <value>",
+		Short:     "Update this worktree's name, description or app",
 		Args:      cobra.ExactArgs(2),
-		ValidArgs: []string{"name", "description"},
+		ValidArgs: []string{"name", "description", "app"},
 		RunE: func(_ *cobra.Command, args []string) error {
 			return runSet(args[0], args[1])
 		},
@@ -24,8 +24,8 @@ func newSet() *cobra.Command {
 }
 
 func runSet(field, value string) error {
-	if field != "name" && field != "description" {
-		return apperr.New(apperr.CodeUsage, "unknown field %q; expected name or description", field)
+	if field != "name" && field != "description" && field != "app" {
+		return apperr.New(apperr.CodeUsage, "unknown field %q; expected name, description or app", field)
 	}
 	loc, err := gitutil.Resolve()
 	if err != nil {
@@ -53,6 +53,8 @@ func runSet(field, value string) error {
 			w.Name = value
 		case "description":
 			w.Description = value
+		case "app":
+			w.App = value
 		}
 		w.UpdatedAt = model.Now()
 		result = w

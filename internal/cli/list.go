@@ -151,6 +151,9 @@ func renderWorktree(w *model.Worktree) {
 	if w.Description != "" {
 		fmt.Printf("      %s\n", w.Description)
 	}
+	if w.App != "" {
+		fmt.Printf("      app: %s\n", w.App)
+	}
 	for _, ep := range w.EntryPoints {
 		line := fmt.Sprintf("      - %s (%s): %s", ep.Name, ep.Type, ep.URL)
 		if ep.Description != "" {

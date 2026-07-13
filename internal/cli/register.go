@@ -12,24 +12,26 @@ import (
 )
 
 func newRegister() *cobra.Command {
-	var name, description string
+	var name, description, app string
 	cmd := &cobra.Command{
-		Use:   "register --name <name> [--description <desc>]",
+		Use:   "register --name <name> [--description <desc>] [--app <app>]",
 		Short: "Register (or update) the current worktree",
 		Long: "Records the worktree containing the current directory. Idempotent " +
 			"by path: re-running updates the existing entry (ADR 0003).",
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			return runRegister(name, description, cmd.Flags().Changed("description"))
+			return runRegister(name, description, app,
+				cmd.Flags().Changed("description"), cmd.Flags().Changed("app"))
 		},
 	}
 	cmd.Flags().StringVar(&name, "name", "", "friendly name for this worktree (required)")
 	cmd.Flags().StringVar(&description, "description", "", "what this worktree is for")
+	cmd.Flags().StringVar(&app, "app", "", "application used to work on this worktree, e.g. \"Conductor.app\"")
 	cmd.MarkFlagRequired("name")
 	return cmd
 }
 
-func runRegister(name, description string, descSet bool) error {
+func runRegister(name, description, app string, descSet, appSet bool) error {
 	loc, err := gitutil.Resolve()
 	if err != nil {
 		return err
@@ -55,6 +57,9 @@ func runRegister(name, description string, descSet bool) error {
 		w.Name = name
 		if descSet {
 			w.Description = description
+		}
+		if appSet {
+			w.App = app
 		}
 		w.Special = loc.IsMain()
 		w.UpdatedAt = now
