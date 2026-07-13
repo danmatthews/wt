@@ -44,6 +44,9 @@ func renderWorktree(w *model.Worktree) {
 	if w.Description != "" {
 		fmt.Printf("    %s\n", styleDesc.Render(w.Description))
 	}
+	if w.App != "" {
+		fmt.Printf("    %s\n", styleMuted.Render("app: "+w.App))
+	}
 	for _, ep := range w.EntryPoints {
 		line := fmt.Sprintf("    %s %s  %s",
 			styleMuted.Render("↳"), styleEPName.Render(ep.Name), styleURL.Render(ep.URL))

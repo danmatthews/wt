@@ -137,4 +137,3 @@ func reportPruned(pr []pruned) {
 		fmt.Fprintf(os.Stderr, "pruned %q (%s)\n", p.Name, p.Reason)
 	}
 }
-
