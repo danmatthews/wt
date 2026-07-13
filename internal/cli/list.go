@@ -68,10 +68,13 @@ func listAll(st *store.Store) error {
 	output.Emit(display, prunedExtra(allPruned), func() {
 		reportPruned(allPruned)
 		if len(display) == 0 {
-			fmt.Println("no worktrees registered")
+			fmt.Println(styleMuted.Render("no worktrees registered"))
 			return
 		}
-		for _, p := range display {
+		for i, p := range display {
+			if i > 0 {
+				fmt.Println()
+			}
 			renderProject(p)
 		}
 	})
@@ -135,27 +138,3 @@ func reportPruned(pr []pruned) {
 	}
 }
 
-func renderProject(p *model.Project) {
-	fmt.Println(p.ProjectPath)
-	for _, w := range p.Worktrees {
-		renderWorktree(w)
-	}
-}
-
-func renderWorktree(w *model.Worktree) {
-	tag := ""
-	if w.Special {
-		tag = " [base]"
-	}
-	fmt.Printf("  %s%s  %s\n", w.Name, tag, w.Path)
-	if w.Description != "" {
-		fmt.Printf("      %s\n", w.Description)
-	}
-	for _, ep := range w.EntryPoints {
-		line := fmt.Sprintf("      - %s (%s): %s", ep.Name, ep.Type, ep.URL)
-		if ep.Description != "" {
-			line += fmt.Sprintf("  — %s", ep.Description)
-		}
-		fmt.Println(line)
-	}
-}
