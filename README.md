@@ -40,6 +40,16 @@ wt unregister      # drop this worktree's entry (leaves the worktree on disk)
 
 See [`docs/agent-integration.md`](docs/agent-integration.md) for the recommended Conductor setup command and a copy-paste `CLAUDE.md` / `AGENTS.md` snippet.
 
+### Install as an agent skill
+
+If you use the [Skills CLI](https://github.com/vercel-labs/skills), install `wt`'s agent instructions as a skill:
+
+```sh
+pnpx skills add danmatthews/wt   # or: npx skills add danmatthews/wt
+```
+
+This installs [`skills/wt/SKILL.md`](skills/wt/SKILL.md) into your agent (Claude Code, Cursor, etc.) so it knows how and when to use `wt`. The skill carries only the instructions — it does not install the `wt` binary, so make sure `wt` is on your PATH (see [Install](#install)).
+
 ## Design docs
 
 - [`docs/DESIGN.md`](docs/DESIGN.md) — consolidated design.
