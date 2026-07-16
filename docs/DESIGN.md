@@ -1,6 +1,6 @@
 # `wt` — Design
 
-A local, single-user registry of git worktrees, queryable by agents and tools (Conductor) to see what work is in flight per project, and where each worktree's running sites live. `wt` **records** worktrees — it never creates or deletes them.
+A local, single-user registry of git worktrees, queryable by agents and tools (Conductor) to see what work is in flight per project, and where each worktree's running sites live. `wt` **records** worktrees created by other tools, and can also create (`wt create`) and delete (`wt remove`) worktrees itself (ADR 0002 amendment).
 
 This document consolidates the decisions in `docs/adr/`. Where they disagree, the ADRs win.
 
@@ -85,10 +85,12 @@ Every command supports `--json` (ADR 0013). All **mutating** commands self-ident
 
 | Command | Scope | Purpose |
 |---------|-------|---------|
+| `wt create [--name <n>] [--path <p>] [--branch <b>] [--description <d>]` | cwd project | `git worktree add` on a new branch, then register it (ADR 0002 amendment). Path defaults to a sibling of the main worktree named after `--name`; branch defaults to `--name`. Prompts for a name if omitted (fails under `--json` / non-interactive stdin). |
 | `wt register --name <n> [--description <d>]` | cwd worktree | Create/update this worktree's entry (idempotent by path). Auto-flags `special` when cwd is the main worktree. |
 | `wt set name "<n>"` | cwd worktree | Rename this worktree. |
 | `wt set description "<d>"` | cwd worktree | Re-describe this worktree. |
 | `wt unregister` | cwd worktree | Remove this worktree's entry (does not touch disk). |
+| `wt remove <name> [--force]` | cwd project | `git worktree remove` the named worktree, then unregister it (ADR 0002 amendment). Confirms interactively unless `--force`; refuses the main worktree and the current worktree; dirty trees need `--force`. |
 | `wt entry-point add <ep> --type=url --url=<v> [--description <d>]` | cwd worktree | Attach an entry point. |
 | `wt entry-point set <ep> [--name <new>] [--url <v>] [--description <d>]` | cwd worktree | Update an entry point. |
 | `wt entry-point remove <ep>` | cwd worktree | Detach an entry point. |
@@ -109,14 +111,14 @@ Every command supports `--json` with a **consistent envelope**:
 ```
 
 - `pruned` (ADR 0006) rides alongside `data` when `wt list` deletes stale entries.
-- `error.code` enum: `not_in_worktree`, `worktree_not_registered`, `name_conflict`, `entry_point_not_found`, `entry_point_name_conflict`, `unknown_entry_point_type`, `lock_timeout`, `io_error`.
+- `error.code` enum: `not_in_worktree`, `worktree_not_registered`, `worktree_not_found`, `name_conflict`, `entry_point_not_found`, `entry_point_name_conflict`, `unknown_entry_point_type`, `lock_timeout`, `io_error`, `usage`, `git_unavailable`, `git_error`.
 - Failures exit `1` (single non-zero); agents branch on `error.code`, not exit status.
 
 ## 6. Lifecycle & staleness (ADR 0006)
 
-- Well-behaved teardown: `wt unregister`.
+- Well-behaved teardown: `wt unregister` drops the entry only; `wt remove <name>` also deletes the worktree from disk (ADR 0002 amendment).
 - Safety net: because identity is the worktree path, any entry whose path no longer exists on disk is **stale**. `wt list` **deletes** it and **reports** it (human: a `pruned …` line; JSON: the `pruned` array). Pruning takes the project-file lock.
-- Removing the registry entry never deletes the worktree.
+- `unregister` never deletes the worktree. `remove` does, but only after confirmation (or `--force`), and it deletes from git *before* unregistering so a failure leaves at worst a stale entry the prune above cleans up.
 
 ## 7. Open items to revisit later
 

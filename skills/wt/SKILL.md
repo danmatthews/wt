@@ -5,7 +5,7 @@ description: Use when working inside a git worktree on a machine that tracks act
 
 # wt — git worktree registry
 
-`wt` is a local, single-user registry of git worktrees and the local URLs they expose. It **records** worktrees; it never creates or deletes them. Use it to make the worktree you're in — and any services it brings up — visible to other agents and tools on this machine.
+`wt` is a local, single-user registry of git worktrees and the local URLs they expose. It **records** worktrees, and can also create (`wt create`) and delete (`wt remove`) worktrees for you. Use it to make the worktree you're in — and any services it brings up — visible to other agents and tools on this machine.
 
 ## Prerequisite: check `wt` is installed
 
@@ -27,6 +27,12 @@ Run `wt` from inside the worktree — it self-identifies the worktree and its pr
   ```
   `register` is idempotent by path, so re-running it is safe.
 
+- **Spin up a fresh worktree** (creates it via `git worktree add` on a new branch, then registers it) from inside the project:
+  ```sh
+  wt create --name <short-name> --description "<what it's for>"
+  ```
+  Pass `--name` explicitly when scripting — without it `wt create` prompts, which fails under `--json` or a non-interactive shell. Use `register` instead when the worktree already exists.
+
 - **Keep the description current** so others can see what this worktree is for:
   ```sh
   wt set description "<what you're working on>"
@@ -47,6 +53,12 @@ Run `wt` from inside the worktree — it self-identifies the worktree and its pr
   ```sh
   wt unregister
   ```
+
+- **Delete a worktree entirely** (removes it from disk *and* the registry). Run this from a *different* worktree — git won't remove the one you're standing in — and target it by name. Pass `--force` when scripting, since it otherwise asks for confirmation and refuses on a non-interactive stdin:
+  ```sh
+  wt remove <short-name> --force
+  ```
+  A worktree with uncommitted or untracked changes also needs `--force`. Prefer `unregister` if you only want to stop tracking it.
 
 ## Tips
 

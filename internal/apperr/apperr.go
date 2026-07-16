@@ -9,6 +9,7 @@ import "fmt"
 const (
 	CodeNotInWorktree          = "not_in_worktree"
 	CodeWorktreeNotRegistered  = "worktree_not_registered"
+	CodeWorktreeNotFound       = "worktree_not_found"
 	CodeNameConflict           = "name_conflict"
 	CodeEntryPointNotFound     = "entry_point_not_found"
 	CodeEntryPointNameConflict = "entry_point_name_conflict"
@@ -16,6 +17,8 @@ const (
 	CodeLockTimeout            = "lock_timeout"
 	CodeIOError                = "io_error"
 	CodeUsage                  = "usage"
+	CodeGitUnavailable         = "git_unavailable"
+	CodeGitError               = "git_error"
 )
 
 // Error is a wt domain error.

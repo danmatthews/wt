@@ -89,6 +89,12 @@ func (s *Store) Update(projectPath string, fn func(*model.Project) error) (*mode
 	return p, nil
 }
 
+// Project returns the stored project keyed by projectPath, or nil if none
+// exists yet (unlocked snapshot read).
+func (s *Store) Project(projectPath string) (*model.Project, error) {
+	return readFile(s.fileFor(projectPath))
+}
+
 // All returns every stored project (unlocked snapshot read).
 func (s *Store) All() ([]*model.Project, error) {
 	entries, err := os.ReadDir(s.projectsDir())

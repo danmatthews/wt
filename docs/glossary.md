@@ -4,7 +4,7 @@ The ubiquitous language for `wt`. See `docs/DESIGN.md` for the consolidated desi
 
 | Term | Definition |
 |------|------------|
-| **wt** | A local, single-user registry of git worktrees, queryable by agents/tools to see what work is in flight per project. Records worktrees; never creates/deletes them. |
+| **wt** | A local, single-user registry of git worktrees, queryable by agents/tools to see what work is in flight per project. Records worktrees created elsewhere, and can also create (`wt create`) and delete (`wt remove`) worktrees itself. |
 | **Registry** | The datastore: one TOML file per project under `~/.config/wt/projects/`, local to one macOS user account, guarded by per-file locking. |
 | **Project** | The base git repository worktrees belong to. Identity = the absolute path of its **main worktree** on the local machine. |
 | **Main worktree** | The primary checkout holding the shared `.git`; its path identifies the project. Registrable as a worktree entry, but flagged **special**. |
@@ -21,9 +21,11 @@ The ubiquitous language for `wt`. See `docs/DESIGN.md` for the consolidated desi
 
 | Command | Scope | Purpose |
 |---------|-------|---------|
+| `wt create [--name <n>] [--path <p>] [--branch <b>] [--description <d>]` | cwd project | `git worktree add` on a new branch, then register it. Prompts for a name if omitted. |
 | `wt register --name <n> [--description <d>]` | cwd worktree | Create/update this worktree (idempotent by path). |
 | `wt set name \| description "<v>"` | cwd worktree | Rename / re-describe this worktree. |
-| `wt unregister` | cwd worktree | Remove this worktree's entry. |
+| `wt unregister` | cwd worktree | Remove this worktree's entry (leaves the worktree on disk). |
+| `wt remove <name> [--force]` | cwd project | Delete a named sibling worktree from disk (`git worktree remove`) and drop its entry. Confirms unless `--force`. |
 | `wt entry-point add \| set \| remove <ep> …` | cwd worktree | Manage this worktree's typed entry points. |
 | `wt list [--wt]` | global / cwd | List all projects→worktrees→entry points, or just the current worktree. |
 
