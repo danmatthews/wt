@@ -25,6 +25,8 @@ func newRoot() *cobra.Command {
 	}
 	root.PersistentFlags().BoolVar(&output.JSON, "json", false, "emit machine-readable JSON output")
 	root.AddCommand(
+		newCreate(),
+		newRemove(),
 		newRegister(),
 		newList(),
 		newSet(),

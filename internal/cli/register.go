@@ -36,11 +36,25 @@ func runRegister(name, description, app string, descSet, appSet bool) error {
 	if err != nil {
 		return err
 	}
-	st, err := store.Default()
+	result, err := registerWorktree(loc, name, description, app, descSet, appSet)
 	if err != nil {
 		return err
 	}
+	output.Emit(result, nil, func() {
+		fmt.Printf("registered %q at %s\n", result.Name, result.Path)
+	})
+	return nil
+}
 
+// registerWorktree records (or updates, idempotent by path — ADR 0003) the
+// worktree at loc.Worktree in loc's project. descSet/appSet gate whether the
+// respective field is written, so a zero value can clear vs. leave-as-is.
+// Shared by `register` (cwd) and `create` (the freshly-created path).
+func registerWorktree(loc gitutil.Location, name, description, app string, descSet, appSet bool) (*model.Worktree, error) {
+	st, err := store.Default()
+	if err != nil {
+		return nil, err
+	}
 	var result *model.Worktree
 	if _, err := st.Update(loc.Main, func(p *model.Project) error {
 		if ex := p.FindByName(name); ex != nil && ex.Path != loc.Worktree {
@@ -66,11 +80,7 @@ func runRegister(name, description, app string, descSet, appSet bool) error {
 		result = w
 		return nil
 	}); err != nil {
-		return err
+		return nil, err
 	}
-
-	output.Emit(result, nil, func() {
-		fmt.Printf("registered %q at %s\n", result.Name, result.Path)
-	})
-	return nil
+	return result, nil
 }

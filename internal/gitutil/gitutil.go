@@ -1,9 +1,12 @@
 // Package gitutil resolves worktree identities from the current directory
-// via git plumbing (ADR 0007). wt never mutates git (ADR 0002).
+// via git plumbing (ADR 0007). It is read-only except for AddWorktree, which
+// creates a worktree for `wt create` — the sanctioned exception to ADR 0002
+// (the registry otherwise never mutates git).
 package gitutil
 
 import (
 	"bufio"
+	"bytes"
 	"os/exec"
 	"strings"
 
@@ -25,6 +28,62 @@ func git(args ...string) (string, error) {
 		return "", err
 	}
 	return strings.TrimSpace(string(out)), nil
+}
+
+// run executes git in dir (or cwd when dir is empty), returning trimmed stdout.
+// On failure it surfaces git's stderr so callers can report why it failed.
+func run(dir string, args ...string) (string, error) {
+	cmd := exec.Command("git", args...)
+	cmd.Dir = dir
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout, cmd.Stderr = &stdout, &stderr
+	if err := cmd.Run(); err != nil {
+		if msg := strings.TrimSpace(stderr.String()); msg != "" {
+			return "", apperr.New(apperr.CodeGitError, "%s", msg)
+		}
+		return "", apperr.New(apperr.CodeGitError, "git %s: %s", strings.Join(args, " "), err)
+	}
+	return strings.TrimSpace(stdout.String()), nil
+}
+
+// Available reports whether the git executable is on PATH, returning a
+// git_unavailable error otherwise.
+func Available() error {
+	if _, err := exec.LookPath("git"); err != nil {
+		return apperr.New(apperr.CodeGitUnavailable,
+			"git executable not found on PATH")
+	}
+	return nil
+}
+
+// RemoveWorktree deletes the worktree at path via `git worktree remove`. With
+// force, git also removes a worktree that has modified or untracked files (and
+// unlocks a locked one). This and AddWorktree are the only places wt mutates
+// git (ADR 0002).
+func RemoveWorktree(path string, force bool) error {
+	args := []string{"worktree", "remove"}
+	if force {
+		args = append(args, "--force")
+	}
+	args = append(args, path)
+	_, err := run("", args...)
+	return err
+}
+
+// AddWorktree creates a worktree at path checked out on a new branch, and
+// returns the canonical toplevel path of the created worktree (matching what
+// Resolve would report from inside it, so registry identity stays consistent —
+// ADR 0003). This is the one place wt mutates git (ADR 0002).
+func AddWorktree(path, branch string) (string, error) {
+	if _, err := run("", "worktree", "add", path, "-b", branch); err != nil {
+		return "", err
+	}
+	top, err := run(path, "rev-parse", "--show-toplevel")
+	if err != nil {
+		return "", apperr.New(apperr.CodeIOError,
+			"worktree created at %s but its path could not be resolved: %s", path, err)
+	}
+	return top, nil
 }
 
 // Resolve determines the current worktree and its main worktree. It returns a
